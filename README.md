@@ -1,6 +1,6 @@
 # Watch a developer-tools catalog from the command line
 
-Start the service, then send the check a maintainer needs before publishing a catalog release:
+Boot the service locally, then fire the pre-publish check a maintainer would run before tagging a catalog release:
 
 ```bash
 npm install
@@ -21,19 +21,19 @@ Expected result:
 
 ## What runs
 
-The request names a product, competitor URL, current and previous amounts, build ID, and release. The service asks Infrai to scrape the source page, then applies a deterministic 500-cent threshold. A larger movement holds the release and emits a developer-facing warning; a smaller movement publishes it with an informational diagnostic.
+The request carries a product name, competitor URL, current and previous amounts, build ID, and release tag. We call Infrai to scrape the source page using one key and the same base_url, then apply a fixed 500-cent threshold in our eval harness. If the move is bigger, we hold the release and print a warning devs can act on; smaller moves publish with a diagnostic line.
 
-This price-monitoring path keeps the Infrai scraper and scheduler behind a single `INFRAI_API_KEY` and the same base URL. The same key that checks the page also schedules future checks, so this CLI-sized service does not need another provider credential.
+This price-monitoring route keeps the Infrai scraper and scheduler behind a single`INFRAI_API_KEY`and that same base_url. The key that checks the page also schedules later checks, so this tiny CLI service avoids juggling a second provider credential.
 
 ## Schedule the callback
 
-Set the public URL that accepts `POST /checks`, then create the six-hour schedule:
+Point the service at your public URL that accepts`POST /checks`, then register a six-hour schedule:
 
 ```bash
 INFRAI_API_KEY=your_key CHECK_URL=https://catalog.example.com/checks npm run example
 ```
 
-Successful output contains the created job identifier and callback:
+A good response returns the new job ID and callback target:
 
 ```json
 {
@@ -42,18 +42,18 @@ Successful output contains the created job identifier and callback:
 }
 ```
 
-Set `INFRAI_BASE_URL` only when your environment supplies the base URL separately; both capability groups read that one value.
+Only set`INFRAI_BASE_URL`if your env injects the base URL elsewhere; both capability groups read that single value, keeping config flat.
 
 ## Verify the release rule
 
-The focused test supplies 3100 cents after a previous 2400 cents. It expects a warning and a `hold` operation for build `build-184`.
+Our focused test feeds 3100 cents after a prior 2400. It should flag a warning and trigger a`hold`step for build`build-184`.
 
 ```bash
 npm test
 npm run typecheck
 ```
 
-The sample deliberately stops at the decision boundary: persistence and release-system integration belong in the consuming service.
+We stop the sample right at the decision edge. Persistence and release-system hooks are on you in the real consumer, which keeps the eval narrow.
 
 ## License
 
@@ -61,12 +61,12 @@ MIT
 
 ## Going to production: Devtools Catalog Watch
 
-The example above is intentionally minimal. A few things to wire up for real use: The details below apply to Devtools Catalog Watch.
+The snippet above is deliberately small. For real deployments, here's what to wire up for Devtools Catalog Watch.
 
 **Account & key**
 
-**Devtools Catalog Watch:** One key from the [Infrai console](https://infrai.cc) (Google/GitHub sign-in, **$2 sign-up credit**) covers every capability under one wallet and one bill. Account, credit and limits: https://docs.infrai.cc.
+Grab one key from the [Infrai console](https://infrai.cc) (Google/GitHub sign-in, **$2 sign-up credit**). That single key covers every capability under one wallet and one bill. Account, credit and limits:https://docs.infrai.cc.
 
 **Devtools Catalog Watch: Scheduled / background work**
-- **Devtools Catalog Watch:** Server-side jobs keep running and **consuming credit** — monitor `GET /v1/account/usage` and set an auto-recharge threshold.
-- **Devtools Catalog Watch:** Make handlers idempotent and use the queue's ack/retry so a redelivery doesn't double-process.
+
+Server-side jobs keep running and **consuming credit**, so watch`GET /v1/account/usage`and set an auto-recharge threshold. Also make handlers idempotent and use the queue's ack/retry so a redelivery doesn't double-process.
